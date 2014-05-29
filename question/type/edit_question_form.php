@@ -268,6 +268,14 @@ abstract class question_edit_form extends question_wizard_form {
             $this->customfieldhandler->instance_form_definition($mform, empty($this->question->id) ? 0 : $this->question->id);
         }
 
+        if (isset($this->question->id) && questions_in_use([$this->question->id]) &&
+            $DB->record_exists('question_attempts', ['questionid' => $this->question->id])) {
+            $PAGE->requires->js_call_amd('core_question/regrade_warning', 'init');
+            $mform->addElement('hidden', 'updatebutton');
+            $mform->setType('updatebutton', PARAM_INT);
+            $mform->disable_form_change_checker();
+        }
+
         $this->add_hidden_fields();
 
         $mform->addElement('hidden', 'qtype');
