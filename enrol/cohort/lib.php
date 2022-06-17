@@ -445,6 +445,17 @@ class enrol_cohort_plugin extends enrol_plugin {
         $mform->setDefault('roleid', $this->get_config('roleid'));
         $groups = $this->get_group_options($coursecontext);
         $mform->addElement('select', 'customint2', get_string('addgroup', 'enrol_cohort'), $groups);
+
+        $mform->addElement('select', 'customint3', get_string('sendcoursewelcomemessage', 'enrol_cohort'),
+            enrol_send_welcome_email_options());
+        $instance->customint3 = ENROL_SEND_EMAIL_FROM_COURSE_CONTACT;
+        $mform->addHelpButton('customint3', 'sendcoursewelcomemessage', 'enrol_cohort');
+
+        $options = ['cols' => '60', 'rows' => '8', 'placeholder' => get_string('customwelcomemessageplaceholder', 'enrol')];
+        $mform->addElement('textarea', 'customtext1', get_string('customwelcomemessage', 'enrol'), $options);
+        $mform->hideIf('customtext1', 'customint3', 'eq', ENROL_DO_NOT_SEND_EMAIL);
+        $mform->addHelpButton('customtext1', 'customwelcomemessage', 'enrol');
+
     }
 
     /**
@@ -497,6 +508,36 @@ class enrol_cohort_plugin extends enrol_plugin {
             $errors['customint1'] = get_string('invaliddata', 'error');
         }
         return $errors;
+    }
+
+    /**
+     * Enrol user into course via enrol instance.
+     *
+     * @param stdClass $instance
+     * @param int $userid
+     * @param int $roleid optional role id
+     * @param int $timestart 0 means unknown
+     * @param int $timeend 0 means forever
+     * @param int $status default to ENROL_USER_ACTIVE for new enrolments, no change by default in updates
+     * @param bool $recovergrades restore grade history
+     * @return void
+     */
+    public function enrol_user(stdClass $instance, $userid, $roleid = null, $timestart = 0, $timeend = 0,
+            $status = null, $recovergrades = null) {
+        parent::enrol_user($instance, $userid, $roleid, $timestart, $timeend, $status, $recovergrades);
+        // Send welcome message.
+        if ($instance->customint3 != ENROL_DO_NOT_SEND_EMAIL) {
+            $this->send_welcome_message($instance, $userid);
+        }
+    }
+
+    /**
+     * Returns defaults for new instances.
+     * @return array
+     */
+    public function get_instance_defaults() {
+        $fields['customint3'] = $this->get_config('sendcoursewelcomemessage');
+        return $fields;
     }
 }
 

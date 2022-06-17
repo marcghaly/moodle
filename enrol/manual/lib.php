@@ -606,6 +606,15 @@ class enrol_manual_plugin extends enrol_plugin {
         $mform->addHelpButton('expirythreshold', 'expirythreshold', 'core_enrol');
         $mform->disabledIf('expirythreshold', 'expirynotify', 'eq', 0);
 
+        $mform->addElement('select', 'customint1', get_string('sendcoursewelcomemessage', 'enrol_manual'),
+            enrol_send_welcome_email_options());
+        $instance->customint1 = ENROL_SEND_EMAIL_FROM_COURSE_CONTACT;
+        $mform->addHelpButton('customint1', 'sendcoursewelcomemessage', 'enrol_manual');
+
+        $options = ['cols' => '60', 'rows' => '8', 'placeholder' => get_string('customwelcomemessageplaceholder', 'enrol')];
+        $mform->addElement('textarea', 'customtext1', get_string('customwelcomemessage', 'enrol'), $options);
+        $mform->addHelpButton('customtext1', 'customwelcomemessage', 'enrol');
+        $mform->hideIf('customtext1', 'customint1', 'eq', ENROL_DO_NOT_SEND_EMAIL);
         if (enrol_accessing_via_instance($instance)) {
             $warntext = get_string('instanceeditselfwarningtext', 'core_enrol');
             $mform->addElement('static', 'selfwarn', get_string('instanceeditselfwarning', 'core_enrol'), $warntext);
@@ -648,6 +657,35 @@ class enrol_manual_plugin extends enrol_plugin {
         return $errors;
     }
 
+    /**
+     * Enrol user into course via enrol instance.
+     *
+     * @param stdClass $instance
+     * @param int $userid
+     * @param int $roleid optional role id
+     * @param int $timestart 0 means unknown
+     * @param int $timeend 0 means forever
+     * @param int $status default to ENROL_USER_ACTIVE for new enrolments, no change by default in updates
+     * @param bool $recovergrades restore grade history
+     * @return void
+     */
+    public function enrol_user(stdClass $instance, $userid, $roleid = null, $timestart = 0, $timeend = 0,
+            $status = null, $recovergrades = null) {
+        parent::enrol_user($instance, $userid, $roleid, $timestart, $timeend, $status, $recovergrades);
+        // Send welcome message.
+        if ($instance->customint1 != ENROL_DO_NOT_SEND_EMAIL) {
+            $this->send_welcome_message($instance, $userid);
+        }
+    }
+
+    /**
+     * Returns defaults for new instances.
+     * @return array
+     */
+    public function get_instance_defaults() {
+        $fields['customint1'] = $this->get_config('sendcoursewelcomemessage');
+        return $fields;
+    }
 }
 
 /**

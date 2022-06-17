@@ -132,6 +132,15 @@ $messageproviders = array (
     // A comment was left on a user competency.
     'competencyusercompcomment' => array(),
 
+    // Message notification sent.
+    'enrol_confirmation_notification' => [
+        'capability'  => 'moodle/enrol:receivemessage',
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+
     // User insights.
     'insights' => array (
         'defaults' => [

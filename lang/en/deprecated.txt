@@ -57,3 +57,7 @@ notflagged,core_question
 cannotswitcheditmodeon,core_error
 multilangforceold,core_admin
 nopermissionmove,core_question
+proceedtocourse,core_enrol
+enrol:receivemessage,core_enrol
+sendcoursewelcomemessage,core_enrol
+sendcoursewelcomemessage_help,core_enrol

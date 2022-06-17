@@ -29,15 +29,6 @@ $string['cohortnonmemberinfo'] = 'Only members of cohort \'{$a}\' can self-enrol
 $string['cohortonly'] = 'Only cohort members';
 $string['cohortonly_help'] = 'Self enrolment may be restricted to members of a specified cohort only. Note that changing this setting has no effect on existing enrolments.';
 $string['confirmbulkdeleteenrolment'] = 'Are you sure you want to delete these user enrolments?';
-$string['customwelcomemessage'] = 'Custom welcome message';
-$string['customwelcomemessage_help'] = 'A custom welcome message may be added as plain text or Moodle-auto format, including HTML tags and multi-lang tags.
-
-The following placeholders may be included in the message:
-
-* Course name {$a->coursename}
-* Link to user\'s profile page {$a->profileurl}
-* User email {$a->email}
-* User fullname {$a->fullname}';
 $string['defaultrole'] = 'Default role assignment';
 $string['defaultrole_desc'] = 'Select role which should be assigned to users during self enrolment';
 $string['deleteselectedusers'] = 'Delete selected user enrolments';
@@ -118,6 +109,8 @@ $string['unenroluser'] = 'Do you really want to unenrol "{$a->user}" from course
 $string['unenrolusers'] = 'Unenrol users';
 $string['usepasswordpolicy'] = 'Use password policy';
 $string['usepasswordpolicy_desc'] = 'Use standard password policy for enrolment keys.';
+
+// Deprecated since Moodle 4.0.
 $string['welcometocourse'] = 'Welcome to {$a}';
 $string['welcometocoursetext'] = 'Welcome to {$a->coursename}!
 

@@ -3323,4 +3323,134 @@ abstract class enrol_plugin {
         }
         return $errors;
     }
+
+    /**
+     * Send welcome message to specified user.
+     *
+     * @param stdClass $instance
+     * @param stdClass|int $userid user record or user id
+     * @return void
+     */
+    protected function send_welcome_message($instance, $userid) {
+        global $CFG, $DB;
+
+        $context = context_course::instance($instance->courseid);
+        if (has_capability('moodle/enrol:receivemessage', $context, $userid)) {
+            if (is_object($userid)) {
+                $userid = $userid->id;
+            }
+            $user = core_user::get_user($userid);
+            $coursefullname = $DB->get_field('course', 'fullname', ['id' => $instance->courseid], MUST_EXIST);
+            $courserole = $DB->get_field('role', 'shortname', ['id' => $instance->roleid]);
+
+            $a = new stdClass();
+            $a->coursename = format_string($coursefullname, true, ['context' => $context]);
+            $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id&course=$instance->courseid";
+
+            if (trim($instance->customtext1) !== '') {
+                $message = $instance->customtext1;
+                $key = [
+                    '{$a->coursename}',
+                    '{$a->profileurl}',
+                    '{$a->fullname}',
+                    '{$a->email}',
+                    '{$a->firstname}',
+                    '{$a->lastname}',
+                    '{$a->courserole}',
+                ];
+                $value = [
+                    $a->coursename,
+                    $a->profileurl,
+                    fullname($user),
+                    $user->email,
+                    $user->firstname,
+                    $user->lastname,
+                    $courserole,
+                ];
+                $message = str_replace($key, $value, $message);
+                if (strpos($message, '<') === false) {
+                    // Plain text only.
+                    $messagetext = $message;
+                    $messagehtml = text_to_html($messagetext, null, false, true);
+                } else {
+                    // This is most probably the tag/newline soup known as FORMAT_MOODLE.
+                    $messagehtml = format_text($message, FORMAT_MOODLE,
+                            ['context' => $context, 'para' => false, 'newlines' => true, 'filter' => true]);
+                    $messagetext = html_to_text($messagehtml);
+                }
+            } else {
+                $messagetext = get_string('welcometocoursetext', 'enrol', $a);
+                $messagehtml = text_to_html($messagetext, null, false, true);
+            }
+
+            $subject = get_string('welcometocourse', 'enrol', format_string($coursefullname, true, ['context' => $context]));
+
+            $sendoption = $instance->customint3;
+            $contact = $this->get_welcome_message_contact($sendoption, $context);
+
+            $message = new \core\message\message();
+            $message->courseid = $instance->courseid;
+            $message->component = 'moodle';
+            $message->name = 'enrol_confirmation_notification';
+            $message->userfrom = $contact;
+            $message->userto = $user;
+            $message->subject = $subject;
+            $message->fullmessage = $messagetext;
+            $message->fullmessageformat = FORMAT_MARKDOWN;
+            $message->fullmessagehtml = $messagehtml;
+            $message->notification = 1;
+            $message->contexturl = $a->profileurl;
+            $message->contexturlname = $coursefullname;
+
+            message_send($message);
+        }
+    }
+
+    /**
+     * Get the "from" contact which the email will be sent from.
+     *
+     * @param  int $sendoption send email from constant ENROL_SEND_EMAIL_FROM_*
+     * @param  context $context context where the user will be fetched
+     * @return mixed|stdClass $contact the contact user object.
+     */
+    public function get_welcome_message_contact($sendoption, $context) {
+        global $CFG;
+
+        $contact = null;
+        // Send as the first user assigned as the course contact.
+        if ($sendoption == ENROL_SEND_EMAIL_FROM_COURSE_CONTACT) {
+            $rusers = [];
+            if (!empty($CFG->coursecontact)) {
+                $croles = explode(',', $CFG->coursecontact);
+                list($sort, $sortparams) = users_order_by_sql('u');
+                // We only use the first user.
+                $i = 0;
+                do {
+                    $userfieldsapi = \core_user\fields::for_name();
+                    $allnames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+                    $rusers = get_role_users($croles[$i], $context, true, 'u.id,  u.confirmed, u.username, '. $allnames . ',
+                    u.email, r.sortorder, ra.id', 'r.sortorder, ra.id ASC, ' . $sort, null, '', '', '', '', $sortparams);
+                    $i++;
+                } while (empty($rusers) && !empty($croles[$i]));
+            }
+            if ($rusers) {
+                $contact = array_values($rusers)[0];
+            }
+        } else if ($sendoption == ENROL_SEND_EMAIL_FROM_KEY_HOLDER) {
+            // Send as the first user with enrol/self:holdkey capability assigned in the course.
+            list($sort) = users_order_by_sql('u');
+            $keyholders = get_users_by_capability($context, 'enrol/self:holdkey', 'u.*', $sort);
+            if (!empty($keyholders)) {
+                $contact = array_values($keyholders)[0];
+            }
+        }
+
+        // If send welcome email option is set to no reply or if none of the previous options have
+        // returned a contact send welcome message as noreplyuser.
+        if ($sendoption == ENROL_SEND_EMAIL_FROM_NOREPLY || empty($contact)) {
+            $contact = core_user::get_noreply_user();
+        }
+
+        return $contact;
+    }
 }

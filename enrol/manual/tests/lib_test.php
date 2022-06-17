@@ -543,4 +543,65 @@ class lib_test extends \advanced_testcase {
         // Manual enrol has 2 enrol actions -- edit and unenrol.
         $this->assertCount(2, $actions);
     }
+
+    /**
+     * Test for welcome message is being sent.
+     *
+     * @covers ::email_welcome_message
+     */
+    public function test_email_welcome_message() {
+        global $DB;
+        self::resetAfterTest(true);
+
+        $manualplugin = enrol_get_plugin('manual');
+        $user1 = $this->getDataGenerator()->create_user(['lastname' => 'Doe',
+                'firstname' => 'John', 'email' => 'johndoe@localhost.com']);
+        $user2 = $this->getDataGenerator()->create_user(['lastname' => 'Doo',
+                'firstname' => 'Jane', 'email' => 'janedoo@localhost.com']);
+        $course1 = $this->getDataGenerator()->create_course();
+        $context1 = \context_course::instance($course1->id);
+
+        $instance = (object) [
+            'id' => 1,
+            'enrol' => 'manual',
+            'status' => '0',
+            'courseid' => $course1->id,
+            'sortorder' => '2',
+            'name' => 'manual',
+            'enrolperiod' => '0',
+            'enrolstartdate' => '0',
+            'enrolenddate' => '0',
+            'expirynotify' => '0',
+            'expirythreshold' => '0',
+            'notifyall' => '0',
+            'password' => '',
+            'roleid' => '5',
+            'customint1' => '1',
+            'customint2' => '0',
+            'customint3' => '0',
+            'customint4' => '1',
+            'customint5' => '0',
+            'customint6' => '1',
+            'customtext1' => 'Some dummy custom welcome message'
+        ];
+
+        $studentroleid = $DB->get_field('role', 'id', ['shortname' => 'student']);
+
+        $manualplugin->enrol_user($instance, $user1->id, $studentroleid);
+        $sql = 'SELECT email, fullmessage, subject, useridfrom
+                  FROM {notifications} n
+                  JOIN {user} u ON u.id = n.useridto
+                 WHERE n.useridto = :userid';
+        $record = $DB->get_record_sql($sql, ['userid' => $user1->id]);
+
+        $this->assertEquals('johndoe@localhost.com', $record->email);
+        $this->assertEquals('Welcome to Test course 1', $record->subject);
+        $this->assertEquals('Some dummy custom welcome message', $record->fullmessage);
+        $this->assertEquals(-10, $record->useridfrom);
+
+        // Capability check.
+        $manualplugin->enrol_user($instance, $user2->id);
+        $record = $DB->get_record('notifications', ['useridto' => $user2->id]);
+        $this->assertFalse($record);
+    }
 }

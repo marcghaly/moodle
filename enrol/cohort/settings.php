@@ -44,4 +44,12 @@ if ($ADMIN->fulltree) {
             ENROL_EXT_REMOVED_SUSPENDNOROLES => get_string('extremovedsuspendnoroles', 'enrol'));
         $settings->add(new admin_setting_configselect('enrol_cohort/unenrolaction', get_string('extremovedaction', 'enrol'), get_string('extremovedaction_help', 'enrol'), ENROL_EXT_REMOVED_UNENROL, $options));
     }
+    $settings->add(new admin_setting_heading('enrol_cohort_defaults',
+        get_string('enrolinstancedefaults', 'admin'), get_string('enrolinstancedefaults_desc', 'admin')));
+
+    $settings->add(new admin_setting_configselect('enrol_cohort/sendcoursewelcomemessage',
+        get_string('sendcoursewelcomemessage', 'enrol_cohort'),
+        get_string('sendcoursewelcomemessage_help', 'enrol_cohort'),
+        ENROL_DO_NOT_SEND_EMAIL,
+        enrol_send_welcome_email_options()));
 }

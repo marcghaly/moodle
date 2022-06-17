@@ -176,7 +176,7 @@ class enrol_self_plugin extends enrol_plugin {
         }
         // Send welcome message.
         if ($instance->customint4 != ENROL_DO_NOT_SEND_EMAIL) {
-            $this->email_welcome_message($instance, $USER);
+            $this->send_welcome_message($instance, $USER);
         }
     }
 
@@ -365,51 +365,6 @@ class enrol_self_plugin extends enrol_plugin {
         $fields['customint6']      = $this->get_config('newenrols');
 
         return $fields;
-    }
-
-    /**
-     * Send welcome email to specified user.
-     *
-     * @param stdClass $instance
-     * @param stdClass $user user record
-     * @return void
-     */
-    protected function email_welcome_message($instance, $user) {
-        global $CFG, $DB;
-
-        $course = $DB->get_record('course', array('id'=>$instance->courseid), '*', MUST_EXIST);
-        $context = context_course::instance($course->id);
-
-        $a = new stdClass();
-        $a->coursename = format_string($course->fullname, true, array('context'=>$context));
-        $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id&course=$course->id";
-
-        if (trim($instance->customtext1) !== '') {
-            $message = $instance->customtext1;
-            $key = array('{$a->coursename}', '{$a->profileurl}', '{$a->fullname}', '{$a->email}');
-            $value = array($a->coursename, $a->profileurl, fullname($user), $user->email);
-            $message = str_replace($key, $value, $message);
-            if (strpos($message, '<') === false) {
-                // Plain text only.
-                $messagetext = $message;
-                $messagehtml = text_to_html($messagetext, null, false, true);
-            } else {
-                // This is most probably the tag/newline soup known as FORMAT_MOODLE.
-                $messagehtml = format_text($message, FORMAT_MOODLE, array('context'=>$context, 'para'=>false, 'newlines'=>true, 'filter'=>true));
-                $messagetext = html_to_text($messagehtml);
-            }
-        } else {
-            $messagetext = get_string('welcometocoursetext', 'enrol_self', $a);
-            $messagehtml = text_to_html($messagetext, null, false, true);
-        }
-
-        $subject = get_string('welcometocourse', 'enrol_self', format_string($course->fullname, true, array('context'=>$context)));
-
-        $sendoption = $instance->customint4;
-        $contact = $this->get_welcome_email_contact($sendoption, $context);
-
-        // Directly emailing welcome message rather than using messaging.
-        email_to_user($user, $contact, $subject, $messagetext, $messagehtml);
     }
 
     /**
@@ -826,10 +781,10 @@ class enrol_self_plugin extends enrol_plugin {
                 enrol_send_welcome_email_options());
         $mform->addHelpButton('customint4', 'sendcoursewelcomemessage', 'enrol_self');
 
-        $options = array('cols' => '60', 'rows' => '8');
-        $mform->addElement('textarea', 'customtext1', get_string('customwelcomemessage', 'enrol_self'), $options);
-        $mform->addHelpButton('customtext1', 'customwelcomemessage', 'enrol_self');
-
+        $options = ['cols' => '60', 'rows' => '8', 'placeholder' => get_string('customwelcomemessageplaceholder', 'enrol')];
+        $mform->addElement('textarea', 'customtext1', get_string('customwelcomemessage', 'enrol'), $options);
+        $mform->addHelpButton('customtext1', 'customwelcomemessage', 'enrol');
+        $mform->hideIf('customtext1', 'customint4', 'eq', ENROL_DO_NOT_SEND_EMAIL);
         if (enrol_accessing_via_instance($instance)) {
             $warntext = get_string('instanceeditselfwarningtext', 'core_enrol');
             $mform->addElement('static', 'selfwarn', get_string('instanceeditselfwarning', 'core_enrol'), $warntext);
@@ -999,54 +954,6 @@ class enrol_self_plugin extends enrol_plugin {
             }
         }
         return $roles;
-    }
-
-    /**
-     * Get the "from" contact which the email will be sent from.
-     *
-     * @param int $sendoption send email from constant ENROL_SEND_EMAIL_FROM_*
-     * @param $context context where the user will be fetched
-     * @return mixed|stdClass the contact user object.
-     */
-    public function get_welcome_email_contact($sendoption, $context) {
-        global $CFG;
-
-        $contact = null;
-        // Send as the first user assigned as the course contact.
-        if ($sendoption == ENROL_SEND_EMAIL_FROM_COURSE_CONTACT) {
-            $rusers = array();
-            if (!empty($CFG->coursecontact)) {
-                $croles = explode(',', $CFG->coursecontact);
-                list($sort, $sortparams) = users_order_by_sql('u');
-                // We only use the first user.
-                $i = 0;
-                do {
-                    $userfieldsapi = \core_user\fields::for_name();
-                    $allnames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
-                    $rusers = get_role_users($croles[$i], $context, true, 'u.id,  u.confirmed, u.username, '. $allnames . ',
-                    u.email, r.sortorder, ra.id', 'r.sortorder, ra.id ASC, ' . $sort, null, '', '', '', '', $sortparams);
-                    $i++;
-                } while (empty($rusers) && !empty($croles[$i]));
-            }
-            if ($rusers) {
-                $contact = array_values($rusers)[0];
-            }
-        } else if ($sendoption == ENROL_SEND_EMAIL_FROM_KEY_HOLDER) {
-            // Send as the first user with enrol/self:holdkey capability assigned in the course.
-            list($sort) = users_order_by_sql('u');
-            $keyholders = get_users_by_capability($context, 'enrol/self:holdkey', 'u.*', $sort);
-            if (!empty($keyholders)) {
-                $contact = array_values($keyholders)[0];
-            }
-        }
-
-        // If send welcome email option is set to no reply or if none of the previous options have
-        // returned a contact send welcome message as noreplyuser.
-        if ($sendoption == ENROL_SEND_EMAIL_FROM_NOREPLY || empty($contact)) {
-            $contact = core_user::get_noreply_user();
-        }
-
-        return $contact;
     }
 }
 

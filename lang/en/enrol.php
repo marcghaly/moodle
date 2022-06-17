@@ -34,6 +34,17 @@ $string['assignnotpermitted'] = 'You do not have permission or can not assign ro
 $string['bulkuseroperation'] = 'Bulk user operation';
 $string['configenrolplugins'] = 'Please select all required plugins and arrange then in appropriate order.';
 $string['custominstancename'] = 'Custom instance name';
+$string['customwelcomemessageplaceholder'] = 'Dear {a->fullname}, you have successfully been enrolled to course {a->coursename}';
+$string['customwelcomemessage'] = 'Custom welcome message';
+$string['customwelcomemessage_help'] = 'A custom welcome message may be added as plain text or Moodle-auto format, including HTML tags and multi-lang tags.
+The following placeholders may be included in the message:<br><br>
+* Course name {$a->coursename}<br>
+* Link to user\'s profile page {$a->profileurl}<br>
+* User email {$a->email}<br>
+* User fullname {$a->fullname}<br>
+* User first name {$a->firstname}<br>
+* User last name {$a->lastname}<br>
+* User course role {$a->courserole}<br>';
 $string['defaultenrol'] = 'Add instance to new courses';
 $string['defaultenrol_desc'] = 'It is possible to add this plugin to all new courses by default.';
 $string['deleteinstanceconfirm'] = 'You are about to delete the enrolment method "{$a->name}". All {$a->users} users currently enrolled using this method will be unenrolled and any course-related data such as users\' grades, group membership or forum subscriptions will be deleted.
@@ -104,6 +115,7 @@ $string['invalidrequest'] = 'Invalid request';
 $string['manageenrols'] = 'Manage enrol plugins';
 $string['manageinstance'] = 'Manage';
 $string['method'] = 'Method';
+$string['messageprovider:enrol_confirmation_notification'] = 'Confirmation that the user has been enrolled on a course';
 $string['migratetomanual'] = 'Migrate to manual enrolments';
 $string['nochange'] = 'No change';
 $string['noexistingparticipants'] = 'No existing participants';
@@ -169,8 +181,18 @@ $string['privacy:metadata:user_enrolments:timeend'] = 'The time when the user en
 $string['privacy:metadata:user_enrolments:timestart'] = 'The time when the user enrolment starts';
 $string['privacy:metadata:user_enrolments:timemodified'] = 'The time when the user enrolment was modified';
 $string['privacy:metadata:user_enrolments:userid'] = 'The ID of the user';
+$string['welcometocourse'] = 'Welcome to {$a}';
+$string['welcometocoursetext'] = 'Welcome to {$a->coursename}!
+
+If you have not done so already, you should edit your profile page so that we can learn more about you:
+
+  {$a->profileurl}';
 $string['youenrolledincourse'] = 'You are enrolled in the course.';
 $string['youunenrolledfromcourse'] = 'You are unenrolled from the course "{$a}".';
 
 // Deprecated since Moodle 4.0.
 $string['proceedtocourse'] = 'Proceed to course content';
+$string['enrol:receivemessage'] = 'Receive enrolment message notification';
+
+$string['sendcoursewelcomemessage'] = 'Send course welcome message';
+$string['sendcoursewelcomemessage_help'] = 'When enrolling a user in the course, they may be sent a welcome message email. If sent from the course contact (by default the teacher), and more than one user has this role, the email is sent from the first user to be assigned the role.';

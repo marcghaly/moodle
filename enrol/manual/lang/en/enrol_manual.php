@@ -83,3 +83,5 @@ $string['wsnoinstance'] = 'Manual enrolment plugin instance doesn\'t exist or is
 $string['wsusercannotassign'] = 'You don\'t have the permission to assign this role ({$a->roleid}) to this user ({$a->userid}) in this course ({$a->courseid}).';
 $string['manualpluginnotinstalled'] = 'The "Manual" plugin has not yet been installed';
 $string['privacy:metadata'] = 'The Manual enrolments plugin does not store any personal data.';
+$string['sendcoursewelcomemessage'] = 'Send course welcome message';
+$string['sendcoursewelcomemessage_help'] = 'When manually enrolling a user or cohort in the course, they may be sent a welcome message email. If sent from the course contact (by default the teacher), and more than one user has this role, the email is sent from the first user to be assigned the role.';

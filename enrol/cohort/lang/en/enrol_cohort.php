@@ -34,3 +34,5 @@ $string['pluginname_desc'] = 'Cohort enrolment plugin synchronises cohort member
 $string['status'] = 'Active';
 $string['creategroup'] = 'Create new group';
 $string['privacy:metadata:core_group'] = 'Enrol cohort plugin can create a new group or use an existing group to add all the members of the cohort.';
+$string['sendcoursewelcomemessage'] = 'Send course welcome message';
+$string['sendcoursewelcomemessage_help'] = 'When enrolling a cohort in the course, they may be sent a welcome message email. If sent from the course contact (by default the teacher), and more than one user has this role, the email is sent from the first user to be assigned the role.';

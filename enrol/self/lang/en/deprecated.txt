@@ -1,0 +1,2 @@
+welcometocourse,enrol_self
+welcometocoursetext,enrol_self

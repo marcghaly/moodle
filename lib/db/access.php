@@ -252,6 +252,17 @@ $capabilities = array(
         )
     ),
 
+    /* Receive enrolment message */
+    'moodle/enrol:receivemessage' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'student' => CAP_ALLOW,
+        ],
+    ],
+
     'moodle/restore:restorecourse' => array(
 
         'riskbitmask' => RISK_SPAM | RISK_PERSONAL | RISK_XSS,

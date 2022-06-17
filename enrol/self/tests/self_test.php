@@ -668,9 +668,11 @@ class self_test extends \advanced_testcase {
     }
 
     /**
-     * Test get_welcome_email_contact().
+     * Test get_welcome_message_contact().
+     *
+     * @covers ::get_welcome_message_contact
      */
-    public function test_get_welcome_email_contact() {
+    public function test_get_welcome_message_contact() {
         global $DB;
         self::resetAfterTest(true);
 
@@ -696,7 +698,7 @@ class self_test extends \advanced_testcase {
         $selfplugin->update_status($instance1, ENROL_INSTANCE_ENABLED);
 
         // We do not have a teacher enrolled at this point, so it should send as no reply user.
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
         $this->assertEquals($noreplyuser, $contact);
 
         // By default, course contact is assigned to teacher role.
@@ -704,13 +706,13 @@ class self_test extends \advanced_testcase {
         $selfplugin->enrol_user($instance1, $user1->id, $editingteacherrole->id);
 
         // We should get the teacher email.
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
         $this->assertEquals($user1->username, $contact->username);
         $this->assertEquals($user1->email, $contact->email);
 
         // Now let's enrol another teacher.
         $selfplugin->enrol_user($instance1, $user2->id, $editingteacherrole->id);
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_COURSE_CONTACT, $context);
         $this->assertEquals($user1->username, $contact->username);
         $this->assertEquals($user1->email, $contact->email);
 
@@ -725,20 +727,20 @@ class self_test extends \advanced_testcase {
         assign_capability('enrol/self:holdkey', CAP_ALLOW, $managerrole->id, $context);
 
         // We should get the manager email contact.
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_KEY_HOLDER, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_KEY_HOLDER, $context);
         $this->assertEquals($user3->username, $contact->username);
         $this->assertEquals($user3->email, $contact->email);
 
         // Now let's enrol another manager.
         $selfplugin->enrol_user($instance1, $user4->id, $managerrole->id);
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_KEY_HOLDER, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_KEY_HOLDER, $context);
         $this->assertEquals($user3->username, $contact->username);
         $this->assertEquals($user3->email, $contact->email);
 
         $instance1->customint4 = ENROL_SEND_EMAIL_FROM_NOREPLY;
         $DB->update_record('enrol', $instance1);
 
-        $contact = $selfplugin->get_welcome_email_contact(ENROL_SEND_EMAIL_FROM_NOREPLY, $context);
+        $contact = $selfplugin->get_welcome_message_contact(ENROL_SEND_EMAIL_FROM_NOREPLY, $context);
         $this->assertEquals($noreplyuser, $contact);
     }
 
@@ -787,5 +789,65 @@ class self_test extends \advanced_testcase {
         $actions = $plugin->get_user_enrolment_actions($manager, $ue);
         // Self enrol has 2 enrol actions -- edit and unenrol.
         $this->assertCount(2, $actions);
+    }
+
+    /**
+     * Test for welcome message is being sent.
+     *
+     * @covers ::email_welcome_message
+     */
+    public function test_email_welcome_message() {
+        global $DB;
+        self::resetAfterTest(true);
+
+        $selfplugin = enrol_get_plugin('self');
+        $user1 = $this->getDataGenerator()->create_user(['lastname' => 'Doe',
+        'firstname' => 'John', 'email' => 'johndoe@localhost.com']);
+        $user2 = $this->getDataGenerator()->create_user(['lastname' => 'Doo',
+                'firstname' => 'Jane', 'email' => 'janedoo@localhost.com']);
+        $this->setUser($user1);
+        $course1 = $this->getDataGenerator()->create_course();
+
+        $instance = (object) [
+            'id' => 1,
+            'enrol' => 'self',
+            'status' => '0',
+            'courseid' => $course1->id,
+            'sortorder' => '2',
+            'name' => 'self enrol',
+            'enrolperiod' => '0',
+            'enrolstartdate' => '0',
+            'enrolenddate' => '0',
+            'expirynotify' => '0',
+            'expirythreshold' => '0',
+            'notifyall' => '0',
+            'password' => '',
+            'roleid' => '5',
+            'customint1' => '0',
+            'customint2' => '0',
+            'customint3' => '0',
+            'customint4' => '1',
+            'customint5' => '0',
+            'customint6' => '1',
+            'customtext1' => 'Some dummy custom welcome message'
+        ];
+
+        $selfplugin->enrol_self($instance, $user1->id);
+        $sql = 'SELECT email, fullmessage, subject, useridfrom
+                  FROM {notifications} n
+                  JOIN {user} u ON u.id = n.useridto
+                  WHERE useridto = :userid';
+
+        $record = $DB->get_record_sql($sql, ['userid' => $user1->id]);
+
+        $this->assertEquals('johndoe@localhost.com', $record->email);
+        $this->assertEquals('Welcome to Test course 1', $record->subject);
+        $this->assertEquals('Some dummy custom welcome message', $record->fullmessage);
+        $this->assertEquals(-10, $record->useridfrom);
+
+        // Capability check.
+        $selfplugin->enrol_user($instance, $user2->id);
+        $record = $DB->get_record('notifications', ['useridto' => $user2->id]);
+        $this->assertFalse($record);
     }
 }
