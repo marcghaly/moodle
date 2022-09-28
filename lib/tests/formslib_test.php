@@ -659,6 +659,36 @@ class formslib_test extends \advanced_testcase {
         self::assertTrue($form->is_submitted());
         self::assertSame('Mocked Value', $form->get_data()->title);
     }
+
+    /**
+     * MDL-74135 - Tests confirmation modal.
+     *
+     * @covers \formslib_add_confirm
+     */
+    public function test_add_confirm() {
+        $this->resetAfterTest(true);
+
+        $form = new formslib_add_confirm();
+        ob_start();
+        $form->display();
+        $html = ob_get_clean();
+
+        $this->assertStringContainsString('data-confirm="test"', $html);
+        $this->assertStringContainsString('data-confirmdesc="name cannot be changed after mod"', $html);
+    }
+
+    /**
+     * MDL-74135 - Tests confirmation modal exception.
+     *
+     * @covers \formslib_add_confirm_throw
+     */
+    public function test_add_confirm_exception() {
+        $this->resetAfterTest(true);
+
+        // Confirm that exception is thrown when invalid element name passed.
+        $this->expectException(\moodle_exception::class);
+        $form = new formslib_add_confirm_throw();
+    }
 }
 
 
@@ -1012,5 +1042,47 @@ class formslib_multiple_validation_form extends moodleform {
             $errors['somenumber'] = 'The number cannot be negative.';
         }
         return $errors;
+    }
+}
+
+/**
+ * Used to test you can add a confirmation modal box for a specific element
+ *
+ * @package    core_form
+ * @author     Ghaly Marc-Alexandre <marc-alexandreghalyo@catalyst-ca.net>
+ * @copyright  2022 Catalyst IT
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class formslib_add_confirm extends moodleform {
+    /**
+     * Simple definition, text element with confirm modal box.
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        $mform->addElement('text', 'texttest', 'test123', 'testing123');
+        $mform->setType('texttest', PARAM_RAW);
+        $mform->add_confirm('texttest', 'test', 'name cannot be changed after mod');
+    }
+}
+
+/**
+ * Used to test passing unvalid element name will throw an exception
+ *
+ * @package    core_form
+ * @author     Ghaly Marc-Alexandre <marc-alexandreghalyo@catalyst-ca.net>
+ * @copyright  2022 Catalyst IT
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class formslib_add_confirm_throw extends moodleform {
+    /**
+     * Simple definition, text element with wrong element name passed to confirm modal box.
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        $mform->addElement('text', 'texttest', 'test123', 'testing123');
+        $mform->setType('texttest', PARAM_RAW);
+        $mform->add_confirm('somedesastrousname', 'test', 'name cannot be changed after mod');
     }
 }
