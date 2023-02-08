@@ -1661,6 +1661,24 @@ class core_renderer extends renderer_base {
     }
 
     /**
+     * Display course visibility badge provided course is hidden
+     *
+     * @return bool Wether or not course visibility badge should be displayed.
+     */
+    public function course_header_visibility() {
+        global $USER;
+        if ($this->page->course->id == SITEID || (int) $this->page->course->visible === 1) {
+            // Return immediately.
+            return false;
+        }
+        // Only display the icon for users whose popup content make senses.
+        if (has_capability('moodle/course:visibility', $this->page->context, $USER->id)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Get the course pattern datauri to show on a course card.
      *
      * The datauri is an encoded svg that can be passed as a url.
@@ -4539,6 +4557,7 @@ EOD;
         $header->navbar = $this->navbar();
         $header->pageheadingbutton = $this->page_heading_button();
         $header->courseheader = $this->course_header();
+        $header->showcoursevisibility = $this->course_header_visibility();
         $header->headeractions = $this->page->get_header_actions();
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();

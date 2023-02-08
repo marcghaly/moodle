@@ -26,7 +26,8 @@
         "hasnavbar": false,
         "navbar": "navbar_if_available",
         "courseheader": "course_header_html",
-        "welcomemessage": "welcomemessage"
+        "welcomemessage": "welcomemessage",
+        "showcoursevisibility": true
     }
 }}
 <header id="page-header" class="header-maxwidth d-print-none">
@@ -48,7 +49,18 @@
             {{^welcomemessage}}
                 {{#contextheader}}
                     <div class="mr-auto">
-                        {{{contextheader}}}
+                        <div class="row align-items-center">
+                            <div class="col-auto flex-shrink-1">
+                                {{{contextheader}}}
+                            </div>
+                            {{#showcoursevisibility}}
+                                <div class="col pb-2">
+                                    <span class="badge badge-pill badge-warning">
+                                        {{#str}} hiddenfromstudents {{/str}}
+                                    </span>
+                                </div>
+                            {{/showcoursevisibility}}
+                        </div>
                     </div>
                 {{/contextheader}}
             {{/welcomemessage}}
