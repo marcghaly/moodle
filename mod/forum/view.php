@@ -101,6 +101,7 @@ if ($displaymode != $saveddisplaymode) {
     set_user_preference('forum_displaymode', $displaymode);
 }
 
+$PAGE->requires->js_call_amd('core/scroll_manager', 'scrollToSavedPosition');
 $PAGE->set_context($forum->get_context());
 $PAGE->set_title($forum->get_name());
 $PAGE->add_body_class('forumtype-' . $forum->get_type());

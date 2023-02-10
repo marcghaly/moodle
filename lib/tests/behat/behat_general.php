@@ -2313,4 +2313,45 @@ EOF;
         }
     }
 
+    /**
+     * Checks a user can actually see a specific element / different from should_not_be_visible.
+     *
+     * @When /^Section "(?P<sectionnumber>(?:[^"]|\\")*)" should be visible from user point of view$/
+     * @param string $sectionnumber Section number that should be visible
+     */
+    public function section_should_be_visible_from_user_point_of_view($sectionnumber) {
+        $js = <<<EOF
+        (function() {
+            const section = document.querySelector('li[data-sectionid="{$sectionnumber}"]');
+            return section.getBoundingClientRect().y;
+        })()
+        EOF;
+
+        $yposition = $this->evaluate_script($js);
+        if ($yposition > 0) {
+            return;
+        }
+        throw new ExpectationException('Section ' . $sectionnumber . ' is not visible', $this->getSession());
+    }
+
+    /**
+     * Checks a user cannot actually see a specific element / different from should_be_visible.
+     *
+     * @When /^Section "(?P<sectionnumber>(?:[^"]|\\")*)" should not be visible from user point of view$/
+     * @param string $sectionnumber Section number that should not be visible
+     */
+    public function section_should_not_be_visible_from_user_point_of_view($sectionnumber) {
+        $js = <<<EOF
+        (function() {
+            const section = document.querySelector('li[data-sectionid="{$sectionnumber}"]');
+            return section.getBoundingClientRect().y;
+        })()
+        EOF;
+
+        $yposition = $this->evaluate_script($js);
+        if ($yposition < 0) {
+            return;
+        }
+        throw new ExpectationException('Section ' . $sectionnumber . ' is visible', $this->getSession());
+    }
 }

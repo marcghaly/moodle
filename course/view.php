@@ -44,6 +44,12 @@
         $urlparams['section'] = $section;
     }
 
+    // Scroll position to subjects instead of y position as it would not be accurate.
+    // First argument is class that is present on li elements.
+    // Second argument is a fallback class if first one is not present.
+    // Third one is a selector that should have a data id attribute.
+    $PAGE->requires->js_call_amd('core/scroll_manager', 'scrollToSavedSubject',
+        ['activity', 'course-section', 'li.courseindex-item']);
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
 
     // Prevent caching of this page to stop confusion when changing page after making AJAX changes
