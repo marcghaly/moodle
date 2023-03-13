@@ -1,0 +1,88 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public Licensebllsdsadfasfd
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template core_course/course_list_item
+
+    This template renders the search result list containing courses
+    Example context (json):
+    {
+        "text": "67",
+        "dataid": "5",
+        "dataselected": 2,
+        "datavisible": 1,
+        "hasbulkcourseinput": true,
+        "bulkcourseinput": [ {
+            "type": "checkbox",
+            "coursesearchlistitem": "coursesearchlistitem5",
+            "value": "5",
+            "sronly": "somename bulk action selection"
+        } ],
+        "viewcourseurl": "http://moodle.com/course/management.php?categoryid=1&view=courses&search=67&courseid=5",
+        "coursename": "somename",
+        "categoryname": "Category 1",
+        "actions": [ {
+            "canedit": true,
+            "candelete": true,
+            "canshow": true,
+            "editurl": "http://moodle.com:8001/course/edit.php?id=5",
+            "deleteurl": "http://moodle.com:8001/course/delete.php?id=5",
+            "hidecourseurl": "http://moodle.com:8001/course/managementsearch.php?courseid=5&categoryid=1&sesskey=reHAqFOrZn&action=hidecourse",
+            "showcourseurl":"http://moodle.com:8001/course/managementsearch.php?courseid=5&categoryid=1&sesskey=reHAqFOrZn&action=showcourse"
+        } ]
+    }
+}}
+<li class="listitem listitem-course list-group-item list-group-item-action" data-id="{{dataid}}" data-selected="{{dataselected}}" data-visible="{{datavisible}}">
+    <div class="clearfix">
+        <div class="float-left">
+        {{#hasbulkcourseinput}}
+            <div class="custom-control custom-checkbox mr-1">
+                <input type="{{bulkcourseinput.type}}" id="{{bulkcourseinput.coursesearchlistitem}}" name="bc[]" value="{{bulkcourseinput.value}}" class="bulk-action-checkbox custom-control-input" data-action="select">
+                <label class="custom-control-label" for="{{bulkcourseinput.coursesearchlistitem}}">
+                    <span class="sr-only">{{bulkcourseinput.sronly}}</span>
+                </label>
+            </div>
+        {{/hasbulkcourseinput}}
+        </div>
+        <a class="float-left coursename aalink" href="{{viewcourseurl}}">{{coursename}}</a>
+        <span class="float-left ml-3 text-muted">{{categoryname}}</span>
+        {{#actions}}
+            <div class="float-right">
+                <span class="course-item-actions item-actions">
+                    {{#actions.canedit}}
+                        <a href="{{actions.editurl}}" class="action-edit">
+                            {{#pix}} t/edit, core, {{#str}} edit, core {{/str}} {{/pix}}
+                        </a>
+                    {{/actions.canedit}}
+                    {{#actions.candelete}}
+                        <a href="{{actions.deleteurl}}" class="action-delete">
+                            {{#pix}} t/delete, core, {{#str}} delete, core {{/str}} {{/pix}}
+                        </a>
+                    {{/actions.candelete}}
+                    {{#actions.canshow}}
+                    <a href="{{actions.hidecourseurl}}" class="action-hide" data-action="hide">
+                        {{#pix}} t/hide, core, {{#str}} hide, core {{/str}} {{/pix}}
+                    </a>
+                    <a href="{{actions.showcourseurl}}" class="action-show" data-action="show">
+                        {{#pix}} t/show, core, {{#str}} show, core {{/str}} {{/pix}}
+                    </a>
+                    {{/actions.canshow}}
+                </span>
+                <span class="text-muted idnumber"></span>
+            </div>
+        {{/actions}}
+    </div>
+</li>

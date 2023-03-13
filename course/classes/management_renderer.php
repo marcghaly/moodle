@@ -1097,32 +1097,21 @@ class core_course_management_renderer extends plugin_renderer_base {
             $page = $totalpages - 1;
         }
         $courseid = isset($course) ? $course->id : null;
-        $first = true;
-        $last = false;
-        $i = $page * $perpage;
 
-        $html  = html_writer::start_div('course-listing w-100', array(
-                'data-category' => 'search',
-                'data-page' => $page,
-                'data-totalpages' => $totalpages,
-                'data-totalcourses' => $totalcourses
-        ));
-        $html .= html_writer::tag('h3', get_string('courses'));
-        $html .= $this->search_pagination($totalcourses, $page, $perpage);
-        $html .= html_writer::start_tag('ul', array('class' => 'ml'));
+        $listitems = '';
         foreach ($courses as $listitem) {
-            $i++;
-            if ($i == $totalcourses) {
-                $last = true;
-            }
-            $html .= $this->search_listitem($listitem, $courseid, $first, $last);
-            $first = false;
+            $listitems .= $this->search_listitem($listitem, $courseid);
         }
-        $html .= html_writer::end_tag('ul');
-        $html .= $this->search_pagination($totalcourses, $page, $perpage, true, $search);
-        $html .= $this->course_search_bulk_actions();
-        $html .= html_writer::end_div();
-        return $html;
+
+        $context = [
+            'page' => $page,
+            'totalpages' => $totalpages,
+            'totalcourses' => $totalcourses,
+            'pagingbar' => $this->paging_bar($totalcourses, $page, $perpage, $this->page->url),
+            'listitems' => $listitems,
+            'bulkactions' => $this->course_search_bulk_actions(),
+        ];
+        return $this->render_from_template('core_course/course_list', $context);
     }
 
     /**
@@ -1201,103 +1190,80 @@ class core_course_management_renderer extends plugin_renderer_base {
      * @return string
      */
     public function search_listitem(core_course_list_element $course, $selectedcourse) {
-
+        $hasbulkcourseinput = false;
         $text = $course->get_formatted_name();
-        $attributes = array(
-                'class' => 'listitem listitem-course list-group-item list-group-item-action',
-                'data-id' => $course->id,
-                'data-selected' => ($selectedcourse == $course->id) ? '1' : '0',
-                'data-visible' => $course->visible ? '1' : '0'
-        );
         $bulkcourseinput = '';
         if (core_course_category::get($course->category)->can_move_courses_out_of()) {
-            $bulkcourseinput = array(
+            $hasbulkcourseinput = true;
+            $bulkcourseinput = [
                     'type' => 'checkbox',
-                    'id' => 'coursesearchlistitem' . $course->id,
-                    'name' => 'bc[]',
+                    'coursesearchlistitem' => 'coursesearchlistitem' . $course->id,
                     'value' => $course->id,
-                    'class' => 'bulk-action-checkbox custom-control-input',
-                    'data-action' => 'select'
-            );
+                    'sronly' => get_string('bulkactionselect', 'moodle', $text),
+            ];
         }
-        $viewcourseurl = new moodle_url($this->page->url, array('courseid' => $course->id));
+        $viewcourseurl = new moodle_url($this->page->url, ['courseid' => $course->id]);
         $categoryname = core_course_category::get($course->category)->get_formatted_name();
+        $actions = $this->search_listitem_actions($course);
 
-        $html  = html_writer::start_tag('li', $attributes);
-        $html .= html_writer::start_div('clearfix');
-        $html .= html_writer::start_div('float-left');
-        if ($bulkcourseinput) {
-            $html .= html_writer::start_div('custom-control custom-checkbox mr-1');
-            $html .= html_writer::empty_tag('input', $bulkcourseinput);
-            $labeltext = html_writer::span(get_string('bulkactionselect', 'moodle', $text), 'sr-only');
-            $html .= html_writer::tag('label', $labeltext, array(
-                'class' => 'custom-control-label',
-                'for' => 'coursesearchlistitem' . $course->id));
-            $html .= html_writer::end_div();
-        }
-        $html .= html_writer::end_div();
-        $html .= html_writer::link($viewcourseurl, $text, array('class' => 'float-left coursename aalink'));
-        $html .= html_writer::tag('span', $categoryname, array('class' => 'float-left ml-3 text-muted'));
-        $html .= html_writer::start_div('float-right');
-        $html .= $this->search_listitem_actions($course);
-        $html .= html_writer::tag('span', s($course->idnumber), array('class' => 'text-muted idnumber'));
-        $html .= html_writer::end_div();
-        $html .= html_writer::end_div();
-        $html .= html_writer::end_tag('li');
-        return $html;
+        $context = [
+            'text' => $course->get_formatted_name(),
+            'dataid' => $course->id,
+            'dataselected' => ($selectedcourse == $course->id) ? 1 : 2,
+            'datavisible' => $course->visible ? 1 : 2,
+            'hasbulkcourseinput' => $hasbulkcourseinput,
+            'bulkcourseinput' => $bulkcourseinput,
+            'viewcourseurl' => $viewcourseurl->out(false),
+            'coursename' => $text,
+            'categoryname' => $categoryname,
+            'actions' => $actions,
+        ];
+        return $this->render_from_template('core_course/course_list_item', $context);
     }
 
     /**
      * Renderers actions for individual course actions.
      *
      * @param core_course_list_element  $course The course to renderer actions for.
-     * @return string
+     * @return array
      */
     public function search_listitem_actions(core_course_list_element $course) {
         $baseurl = new moodle_url(
             '/course/managementsearch.php',
-            array('courseid' => $course->id, 'categoryid' => $course->category, 'sesskey' => sesskey())
+            ['courseid' => $course->id, 'categoryid' => $course->category, 'sesskey' => sesskey()]
         );
-        $actions = array();
+        $actions = [
+            'canedit' => false,
+            'candelete' => false,
+            'canshow' => false,
+        ];
         // Edit.
         if ($course->can_access()) {
             if ($course->can_edit()) {
-                $actions[] = $this->output->action_icon(
-                    new moodle_url('/course/edit.php', array('id' => $course->id)),
-                    new pix_icon('t/edit', get_string('edit')),
-                    null,
-                    array('class' => 'action-edit')
-                );
+                $actions['canedit'] = true;
+                $editurl = new moodle_url('/course/edit.php', ['id' => $course->id]);
+                $actions['editurl'] = $editurl->out(false);
             }
             // Delete.
             if ($course->can_delete()) {
-                $actions[] = $this->output->action_icon(
-                    new moodle_url('/course/delete.php', array('id' => $course->id)),
-                    new pix_icon('t/delete', get_string('delete')),
-                    null,
-                    array('class' => 'action-delete')
-                );
+                $actions['candelete'] = true;
+                $candeleteurl = new moodle_url('/course/delete.php', ['id' => $course->id]);
+                $actions['deleteurl'] = $candeleteurl->out(false);
             }
             // Show/Hide.
             if ($course->can_change_visibility()) {
-                    $actions[] = $this->output->action_icon(
-                        new moodle_url($baseurl, array('action' => 'hidecourse')),
-                        new pix_icon('t/hide', get_string('hide')),
-                        null,
-                        array('data-action' => 'hide', 'class' => 'action-hide')
-                    );
-                    $actions[] = $this->output->action_icon(
-                        new moodle_url($baseurl, array('action' => 'showcourse')),
-                        new pix_icon('t/show', get_string('show')),
-                        null,
-                        array('data-action' => 'show', 'class' => 'action-show')
-                    );
+                $actions['canshow'] = true;
+                $hidecourseurl = new moodle_url($baseurl, ['action' => 'hidecourse']);
+                $actions['hidecourseurl'] = $hidecourseurl->out(false);
+
+                $showcourseurl = new moodle_url($baseurl, ['action' => 'showcourse']);
+                $actions['showcourseurl'] = $showcourseurl->out(false);
             }
         }
         if (empty($actions)) {
             return '';
         }
-        return html_writer::span(join('', $actions), 'course-item-actions item-actions');
+        return $actions;
     }
 
     /**

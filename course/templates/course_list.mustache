@@ -1,0 +1,40 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public Licensebllsdsadfasfd
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template core_course/course_list
+
+    This template renders the search result list containing courses
+
+    Example context (json):
+    {
+        "page": 0,
+        "totalpages": 2,
+        "totalcourses": 6,
+        "pagingbar": "<nav aria-label='Page'>...</nav>",
+        "listitems": "<li class='listitem listitem-course list-group-item list-group-item-action'>...</li>",
+        "bulkactions": "<div class='course-bulk-actions bulk-actions'>...</div>"
+    }
+}}
+<div class="course-listing w-100" data-category="search" data-page="{{page}}" data-totalpages="{{totalpages}}" data-totalcourses="{{totalcourses}}">
+    <h3>{{#str}} courses, core {{/str}}</h3>
+    {{{pagingbar}}}
+    <ul class="ml">
+        {{{listitems}}}
+    </ul>
+    {{{pagingbar}}}
+    {{{bulkactions}}}
+</div>
