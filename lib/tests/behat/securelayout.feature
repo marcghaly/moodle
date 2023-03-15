@@ -36,3 +36,16 @@ Feature: Page displaying with secure layout
     And I am on "Course 1" course homepage
     When I follow "Fixture link"
     Then I should not see "This is a custom item" in the "nav" "css_element"
+
+  @_file_upload @javascript
+  Scenario: Confirm that only logo or text is shown in navbar
+    Given I log in as "admin"
+    And I am on "Course 1" course homepage
+    Then I should see "Acceptance test site" in the "nav" "css_element"
+    And I navigate to "Appearance > Logos" in site administration
+    And I upload "lib/tests/fixtures/moodlelogo.png" file to "Compact logo" filemanager
+    And I press "Save changes"
+    And I am on "Course 1" course homepage
+    And I follow "Fixture link"
+    And I should not see "Acceptance test site" in the "nav" "css_element"
+    And "img" "css_element" in the "nav" "css_element" should be visible
